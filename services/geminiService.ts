@@ -1,4 +1,4 @@
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenAI, Type, ThinkingLevel } from "@google/genai";
 import { GEO_AGENT_SYSTEM_INSTRUCTION } from '../constants';
 import { AuditData, FormInput, Competitor } from '../types';
 
@@ -18,16 +18,17 @@ export const fetchCompetitors = async (input: FormInput): Promise<Competitor[]> 
       - Witryna: ${input.website}
 
       KRYTERIA DOBORU KONKURENCJI:
-      1. SZUKAJ TYLKO KONKURENCJI BEZPOŚREDNIEJ: Jeśli firma to "${input.industry}", szukaj innych lokalnych firm o DOKŁADNIE tym samym profilu.
-      2. ABSOLUTNIE WYKLUCZ: Wielkie sieci handlowe i markety budowlane.
-      3. LOKALIZACJA: Priorytetyzuj firmy z "${input.city}" i okolic (promień ok. 20-30km).
+      1. SZUKAJ TYLKO KONKURENCJI BEZPOŚREDNIEJ: Jeśli firma to siłownia/fitness, szukaj innych lokalnych siłowni, klubów fitness i centrów sportowych.
+      2. LOKALIZACJA: Priorytetyzuj firmy z "${input.city}" i najbliższych okolic (promień ok. 15-20km).
+      3. RÓŻNORODNOŚĆ: Uwzględnij zarówno lokalne, niezależne kluby, jak i inne popularne sieci fitness działające w tym mieście.
       4. REALNE DANE: Podaj nazwę, typ działalności pasujący do niszy oraz przypisz realistyczny 'AI Visibility Score' (0-100).
+      5. ID: Wygeneruj unikalne ID dla każdego konkurenta (np. slug nazwy).
 
-      Zwróć listę w formacie JSON.`,
+      Zwróć listę w formacie JSON. Upewnij się, że każda pozycja ma adres URL strony internetowej (jeśli go nie znajdziesz, podaj link do profilu w Google Maps lub Facebooku).`,
       config: {
         tools: [{ googleSearch: {} }],
         responseMimeType: "application/json",
-        thinkingConfig: { thinkingBudget: 2000 },
+        thinkingConfig: { thinkingLevel: ThinkingLevel.HIGH },
         responseSchema: {
           type: Type.ARRAY,
           items: {
@@ -39,7 +40,7 @@ export const fetchCompetitors = async (input: FormInput): Promise<Competitor[]> 
               businessType: { type: Type.STRING },
               estimatedScore: { type: Type.NUMBER }
             },
-            required: ["id", "name", "businessType", "estimatedScore"]
+            required: ["id", "name", "website", "businessType", "estimatedScore"]
           }
         }
       }
@@ -76,11 +77,16 @@ export const runFinalAudit = async (input: FormInput, selectedCompetitors: Compe
       ${competitorsText}
 
       WYMAGANIA DOTYCZĄCE TREŚCI:
-      1. RAPORT MUSI BYĆ BARDZO SZCZEGÓŁOWY. Każda sekcja powinna zawierać min. 5-8 rozbudowanych zdań oraz listy wypunktowane.
-      2. Techniczny audyt musi zawierać konkretne przykłady kodu JSON-LD i poprawnej struktury tabeli.
-      3. Analiza E-E-A-T musi odnosić się do konkretnych braków lub atutów znalezionych na stronie ${input.website}.
-      4. Nie używaj ogólników typu "popraw SEO". Pisz o "optymalizacji atrybutów dla wektorowych baz danych" i "semantycznym linkowaniu".
-      5. Upewnij się, że JSON jest poprawnie sformatowany i kompletny.`,
+      1. RAPORT MUSI BYĆ EKSTREMALNIE SZCZEGÓŁOWY I EKSPERCKI. Każda sekcja w tablicach (mainReportSections, technicalReportSections, salesTeaserSections) musi zawierać:
+         - Minimum 2-3 akapity merytorycznego opisu (min. 600-800 znaków na sekcję).
+         - Listę punktowaną z konkretnymi faktami lub brakami (min. 5 punktów).
+         - Podsekcję "REKOMENDACJE TECHNICZNE" z listą konkretnych kroków do wdrożenia.
+      2. Techniczny audyt (technicalReportSections) MUSI zawierać gotowe do skopiowania fragmenty kodu JSON-LD (Schema.org) oraz przykłady struktur tabel HTML zoptymalizowanych pod LLM.
+      3. Analiza E-E-A-T musi być bezlitosna i oparta na faktach ze strony ${input.website} oraz danych z Google Maps (opinie, NAP).
+      4. Używaj terminologii profesjonalnej: "Vector Embeddings", "Knowledge Graph", "Semantic Triples", "RAG Optimization", "Entity Linking".
+      5. W sekcji Sales Teaser używaj języka korzyści i strat (FOMO), pokazując realne ryzyko utraty rynku na rzecz konkurencji z lepszym wynikiem AI.
+      6. Każdy tytuł sekcji musi być unikalny i profesjonalny.
+      7. Upewnij się, że JSON jest poprawnie sformatowany, kompletny i nie zawiera błędów składniowych.`,
       config: {
         tools: [{ googleSearch: {} }],
         systemInstruction: systemInstructionText,

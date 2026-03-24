@@ -2,22 +2,18 @@ import React, { useState } from 'react';
 import { AuditData, ReportSection } from '../types';
 import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, BarChart, Bar, XAxis, YAxis, Tooltip, Cell } from 'recharts';
 import { jsPDF } from 'jspdf';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface ResultsDashboardProps {
   data: AuditData;
   onReset: () => void;
 }
 
-const SimpleMarkdown = ({ text }: { text: string }) => {
-  const parts = text.split(/(\*\*.*?\*\*)/g);
+const MarkdownContent = ({ text }: { text: string }) => {
   return (
-    <div className="whitespace-pre-wrap text-slate-300 leading-relaxed">
-      {parts.map((part, i) => {
-        if (part.startsWith('**') && part.endsWith('**')) {
-          return <strong key={i} className="text-white font-semibold text-indigo-200">{part.slice(2, -2)}</strong>;
-        }
-        return <span key={i}>{part}</span>;
-      })}
+    <div className="prose prose-invert prose-sm max-w-none prose-headings:text-indigo-300 prose-strong:text-white prose-code:text-indigo-200 prose-code:bg-slate-900 prose-code:px-1 prose-code:rounded prose-pre:bg-slate-900 prose-pre:border prose-pre:border-slate-700 prose-table:border prose-table:border-slate-700 prose-th:bg-slate-900 prose-th:p-2 prose-td:p-2 prose-td:border prose-td:border-slate-700">
+      <ReactMarkdown remarkPlugins={[remarkGfm]}>{text}</ReactMarkdown>
     </div>
   );
 };
@@ -25,7 +21,7 @@ const SimpleMarkdown = ({ text }: { text: string }) => {
 const SectionCard: React.FC<{ section: ReportSection }> = ({ section }) => (
   <div className="bg-slate-800 rounded-xl p-6 border border-slate-700 hover:border-indigo-500/30 transition-colors mb-6 shadow-md">
     <h3 className="text-xl font-bold text-white mb-4 border-b border-slate-700 pb-2">{section.title}</h3>
-    <SimpleMarkdown text={section.content} />
+    <MarkdownContent text={section.content} />
   </div>
 );
 

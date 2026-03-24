@@ -11,6 +11,7 @@ const CompetitorSelector: React.FC<CompetitorSelectorProps> = ({ competitors, on
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [typeFilter, setTypeFilter] = useState<string>('');
   const [scoreFilter, setScoreFilter] = useState<number>(0);
+  const [searchTerm, setSearchTerm] = useState<string>('');
 
   const businessTypes = useMemo(() => 
     Array.from(new Set(competitors.map(c => c.businessType))),
@@ -21,9 +22,10 @@ const CompetitorSelector: React.FC<CompetitorSelectorProps> = ({ competitors, on
     return competitors.filter(c => {
       const matchesType = typeFilter === '' || c.businessType === typeFilter;
       const matchesScore = c.estimatedScore >= scoreFilter;
-      return matchesType && matchesScore;
+      const matchesSearch = c.name.toLowerCase().includes(searchTerm.toLowerCase());
+      return matchesType && matchesScore && matchesSearch;
     });
-  }, [competitors, typeFilter, scoreFilter]);
+  }, [competitors, typeFilter, scoreFilter, searchTerm]);
 
   const toggleSelection = (id: string) => {
     setSelectedIds(prev => {
@@ -64,34 +66,104 @@ const CompetitorSelector: React.FC<CompetitorSelectorProps> = ({ competitors, on
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 bg-slate-900/40 p-4 rounded-xl border border-slate-700/50">
-        <div>
-          <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-2">Typ Działalności</label>
-          <select 
-            className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-white outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
-          >
-            <option value="">Wszystkie typy</option>
-            {businessTypes.map(t => <option key={t} value={t}>{t}</option>)}
-          </select>
+      {/* Filters Section */}
+      <div className="mb-8 bg-slate-900/40 p-6 rounded-2xl border border-slate-700/50 shadow-inner">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-sm font-bold text-slate-300 flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+            </svg>
+            Filtruj i Szukaj
+          </h3>
+          {(typeFilter !== '' || scoreFilter > 0 || searchTerm !== '') && (
+            <button 
+              onClick={() => { setTypeFilter(''); setScoreFilter(0); setSearchTerm(''); }}
+              className="text-xs font-bold text-indigo-400 hover:text-indigo-300 transition-colors flex items-center gap-1"
+            >
+              Wyczyść wszystko
+            </button>
+          )}
         </div>
-        <div>
-          <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-2 flex justify-between">
-            <span>Minimalny Wynik AI</span>
-            <span className="text-indigo-400 font-bold">{scoreFilter}%</span>
-          </label>
-          <div className="flex items-center gap-4">
-            <input 
-              type="range" 
-              min="0" 
-              max="100" 
-              value={scoreFilter} 
-              onChange={(e) => setScoreFilter(parseInt(e.target.value))}
-              className="flex-grow h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-500"
-            />
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Search Input */}
+          <div className="space-y-2">
+            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest">Szukaj po nazwie</label>
+            <div className="relative">
+              <input 
+                type="text"
+                placeholder="Wpisz nazwę firmy..."
+                className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-slate-600">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+            </div>
           </div>
+
+          {/* Business Type Dropdown */}
+          <div className="space-y-2">
+            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest">Branża / Typ</label>
+            <div className="relative">
+              <select 
+                className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all appearance-none cursor-pointer"
+                value={typeFilter}
+                onChange={(e) => setTypeFilter(e.target.value)}
+              >
+                <option value="">Wszystkie ({competitors.length})</option>
+                {businessTypes.map(t => (
+                  <option key={t} value={t}>
+                    {t} ({competitors.filter(c => c.businessType === t).length})
+                  </option>
+                ))}
+              </select>
+              <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-slate-500">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          {/* Score Range Slider */}
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest">Min. AI Score</label>
+              <span className="text-xs font-mono font-bold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded">{scoreFilter}%</span>
+            </div>
+            <div className="pt-3">
+              <input 
+                type="range" 
+                min="0" 
+                max="100" 
+                step="5"
+                value={scoreFilter} 
+                onChange={(e) => setScoreFilter(parseInt(e.target.value))}
+                className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500 hover:accent-indigo-400 transition-all"
+              />
+              <div className="flex justify-between mt-2 text-[8px] text-slate-600 font-bold uppercase tracking-tighter">
+                <span>0%</span>
+                <span>50%</span>
+                <span>100%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="mt-4 pt-4 border-t border-slate-800/50 flex justify-between items-center">
+          <span className="text-[10px] text-slate-500 font-medium">
+            Pokazuję <span className="text-slate-300 font-bold">{filteredCompetitors.length}</span> z <span className="text-slate-300 font-bold">{competitors.length}</span> firm
+          </span>
+          {selectedIds.length > 0 && (
+            <span className="text-[10px] text-indigo-400 font-bold flex items-center gap-1">
+              <span className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-pulse"></span>
+              Wybrano {selectedIds.length}/3 do raportu
+            </span>
+          )}
         </div>
       </div>
 
