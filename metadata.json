@@ -1,5 +1,6 @@
 {
   "name": "GEO Audit Pro Agent",
-  "description": "Profesjonalne narzędzie do audytu widoczności w silnikach AI (GEO) wykorzystujące Gemini 3.0 Pro.",
-  "requestFramePermissions": []
+  "description": "Profesjonalne narzędzie do audytu widoczności w silnikach AI (GEO) wykorzystujące Gemini.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

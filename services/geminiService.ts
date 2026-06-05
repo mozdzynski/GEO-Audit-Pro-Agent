@@ -10,7 +10,7 @@ const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 export const fetchCompetitors = async (input: FormInput): Promise<Competitor[]> => {
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-3-pro-preview',
+      model: 'gemini-3.5-flash',
       contents: `Znajdź 8-10 GŁÓWNYCH I BEZPOŚREDNICH konkurentów dla firmy "${input.companyName}" zlokalizowanej w miejscowości "${input.city}".
       
       KONTEKST DZIAŁALNOŚCI:
@@ -66,7 +66,7 @@ export const runFinalAudit = async (input: FormInput, selectedCompetitors: Compe
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-3-pro-preview',
+      model: 'gemini-3.1-pro-preview',
       contents: `Wykonaj pełny, ROZBUDOWANY audyt GEO dla firmy:
       - Nazwa: ${input.companyName}
       - Miasto: ${input.city}
